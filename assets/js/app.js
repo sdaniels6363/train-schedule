@@ -12,23 +12,66 @@ $(document).ready(function () {
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
 
-  function startClock(){
-    var today = new Date();
-    var h = today.getHours();
-    var m = today.getMinutes();
-    var s = today.getSeconds();
-    m = checkTime(m);
-    s = checkTime(s);
-    $("#time-display").text("Current Time: "+h + ":" + m + ":" + s);
-    var t = setTimeout(startClock, 500);  
+  function startClock() {
+    currTime = moment();
+    $("#time-display").text("Current Time: " + currTime.format("HH:mm:ss"));
+    var t = setTimeout(startClock, 500);
+
+    if (moment().seconds() === 0){
+      // update the ticker
+      trainTicker();
+    }
+
   };
-  function checkTime(i) {
-    if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
-    return i;
-  }
 
   startClock();
 
+  function trainTicker(){
+
+    // clear existing entries from ticker
+    $("#train-1").empty();
+    $("#train-2").empty();
+    $("#train-3").empty();
+    $("#train-4").empty();
+    $("#train-5").empty();
+
+    database.ref().on("child_added", function (snapshot) {
+      // storing the snapshot.val() in a variable for convenience
+      var sv = snapshot.val();
+    
+      // determine train frequency
+      var trainFreq = sv.trainInterval;
+      var trainStart = moment(sv.trainServStart, "HH:mm").subtract(1, "years");
+      var difference = moment().diff(trainStart, "minutes")
+      var timeRemaining = trainFreq - (difference % trainFreq);
+  
+      // Change the HTML to reflect the train arrivals
+      var arrival = `
+      <div>
+        <pre>
+  Train Name: ${sv.trainName}
+  City: ${sv.trainLocation}
+  Next Arrival: ${timeRemaining} minutes
+        </pre>
+      </div>
+      `
+  
+      if ($('#train-1').children().length === 0) {
+        $("#train-1").append(arrival);
+      } else if ($('#train-2').children().length === 0) {
+        $("#train-2").append(arrival);
+      } else if ($('#train-3').children().length === 0) {
+        $("#train-3").append(arrival);
+      } else if ($('#train-4').children().length === 0) {
+        $("#train-4").append(arrival);
+      } else if ($('#train-5').children().length === 0) {
+        $("#train-5").append(arrival);
+      }
+      // Handle the errors
+    }, function (errorObject) {
+      console.log("Errors handled: " + errorObject.code);
+    });
+  };
 
   var database = firebase.database();
 
@@ -54,40 +97,7 @@ $(document).ready(function () {
 
   });
 
-  database.ref().on("child_added", function (snapshot) {
-    // storing the snapshot.val() in a variable for convenience
-    var sv = snapshot.val();
 
-    // Console.loging the last user's data
-    console.log(sv.trainName);
-    console.log(sv.trainLocation);
-    console.log(sv.trainServStart);
-    console.log(sv.trainInterval);
-
-    // Change the HTML to reflect
-    var arrival = `
-    <div>
-      <p>Train Name: ${sv.trainName}</p>
-      <p>City: ${sv.trainLocation}</p>
-    </div>
-    `
-    
-    if ($('#train-1').children().length === 0) {
-      $("#train-1").append(arrival);
-    } else if ($('#train-2').children().length === 0) {
-      $("#train-2").append(arrival);
-    } else if ($('#train-3').children().length === 0) {
-      $("#train-3").append(arrival);
-    } else if ($('#train-4').children().length === 0) {
-      $("#train-4").append(arrival);
-    } else if ($('#train-5').children().length === 0) {
-      $("#train-5").append(arrival);
-    }
-    // Handle the errors
-  }, function (errorObject) {
-    console.log("Errors handled: " + errorObject.code);
-  });
-
-
+  trainTicker();
 });
 
