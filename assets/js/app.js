@@ -47,7 +47,10 @@ $(document).ready(function () {
       "trainServStart": trainServStart,
       "trainInterval": trainInterval,
     });
-
+    $("#trainName").val("");
+    $("#trainLocation").val("");
+    $("#trainServStart").val("");
+    $("#trainInterval").val("");
 
   });
 
@@ -68,6 +71,7 @@ $(document).ready(function () {
       <p>City: ${sv.trainLocation}</p>
     </div>
     `
+    
     if ($('#train-1').children().length === 0) {
       $("#train-1").append(arrival);
     } else if ($('#train-2').children().length === 0) {
