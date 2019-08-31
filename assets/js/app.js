@@ -11,23 +11,12 @@ $(document).ready(function () {
   };
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
+  var database = firebase.database();
 
-  function startClock() {
-    currTime = moment();
-    $("#time-display").text("Current Time: " + currTime.format("HH:mm:ss"));
-    var t = setTimeout(startClock, 500);
 
-    if (moment().seconds() === 0){
-      // update the ticker
-      trainTicker();
-    }
-
-  };
-
-  startClock();
 
   function trainTicker(){
-
+    trainArray = [];
     // clear existing entries from ticker
     $("#train-1").empty();
     $("#train-2").empty();
@@ -38,13 +27,15 @@ $(document).ready(function () {
     database.ref().on("child_added", function (snapshot) {
       // storing the snapshot.val() in a variable for convenience
       var sv = snapshot.val();
-    
+      console.log(sv);
+      test = sv;
       // determine train frequency
       var trainFreq = sv.trainInterval;
       var trainStart = moment(sv.trainServStart, "HH:mm").subtract(1, "years");
       var difference = moment().diff(trainStart, "minutes")
       var timeRemaining = trainFreq - (difference % trainFreq);
   
+      trainArray.push({"trainFreq": sv.trainInterval,"trainLocation": sv.trainLocation, "timeRemaining":timeRemaining});
       // Change the HTML to reflect the train arrivals
       var arrival = `
       <div>
@@ -73,7 +64,17 @@ $(document).ready(function () {
     });
   };
 
-  var database = firebase.database();
+  function startClock() {
+    currTime = moment();
+    $("#time-display").text("Current Time: " + currTime.format("HH:mm:ss"));
+    var t = setTimeout(startClock, 500);
+
+    if (moment().seconds() === 0){
+      // update the ticker
+      trainTicker();
+    }
+
+  };
 
   $("#submit").on("click", function (event) {
     event.preventDefault();
@@ -95,9 +96,11 @@ $(document).ready(function () {
     $("#trainServStart").val("");
     $("#trainInterval").val("");
 
+    trainTicker();
+
   });
 
-
+  startClock();
   trainTicker();
 });
 
